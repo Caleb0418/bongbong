@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>봉봉마켓 - 공동구매 주문 관리 (High-Density Dashboard)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f4f1ea;
+    --bg-card: #ffffff;
+    --bg-soft: #eae5da;
+    --line: #dbd4c5;
+    --line-soft: #e2dcd0;
+    --ink: #1a1a1a;
+    --ink-2: #3a3a3a;
+    --ink-3: #7a7570;
+    --accent: #d4421e;
+    --accent-soft: #fde9e3;
+    --green: #4a7c2a;
+    --green-soft: #e8f0dc;
+    --yellow: #d4a017;
+    --yellow-soft: #faf3dc;
+    --blue: #2d5d8f;
+    --blue-soft: #e0eaf5;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    color: var(--ink);
+    height: 100vh;
+    overflow: hidden;
+    font-feature-settings: 'tnum';
+  }
+
+  /* ─── APP LAYOUT ─── */
+  .app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  /* ─── SIDEBAR (LEFT) ─── */
+  .sidebar {
+    width: 320px;
+    background: #222;
+    color: #fff;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid #333;
+    flex-shrink: 0;
+  }
+
+  .sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+
+  .brand-mark {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Gowun Dodum', serif;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 4px;
+    transform: rotate(-3deg);
+  }
+
+  .brand-text { line-height: 1.1; }
+  .brand-name { font-family: 'Gowun Dodum', serif; font-size: 18px; font-weight: 700; }
+  .brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  .status-panel {
+    background: #2a2a2a;
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .status-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .status-row:last-child { margin-bottom: 0; }
+  .status-label { color: #888; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+  .status-val { font-weight: 600; }
+
+  .today-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #8fd150;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .today-status::before { content: '●'; animation: blink 2s infinite; }
+  .today-status.closed { color: var(--accent); }
+  .today-status.closed::before { content: '■'; animation: none; }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ─── CLOSE CARD (SIDEBAR INLINE) ─── */
+  .close-card {
+    background: #181818;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .close-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .close-card.done .close-label { color: #8fd150; }
+  .close-title { font-family: 'Gowun Dodum', serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .close-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .close-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: 'IBM Plex Sans KR';
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .close-btn:hover { background: #e54d2a; }
+
+  .close-done { display: none; }
+  .close-card.done .close-open { display: none; }
+  .close-card.done .close-done { display: block; }
+  .done-check { font-size: 24px; color: #8fd150; display: block; margin-bottom: 6px; }
+  .done-title { font-family: 'Gowun Dodum', serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .done-stats { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #aaa; line-height: 1.6; }
+  .done-badge {
+    display: inline-block;
+    background: rgba(74, 124, 42, 0.35);
+    color: #8fd150;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-top: 10px;
+  }
+
+  /* ─── MAIN CONTENT (RIGHT) ─── */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  /* ─── KPI COMPACT ─── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 16px;
+    position: relative;
+  }
+  .kpi-label { font-size: 10px; color: var(--ink-3); font-weight: 600; margin-bottom: 4px; }
+  .kpi-value { font-family: 'Gowun Dodum', serif; font-size: 24px; font-weight: 700; line-height: 1; }
+  .kpi-unit { font-size: 12px; color: var(--ink-3); margin-left: 2px; font-family: 'IBM Plex Sans KR'; }
+  .kpi-foot { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-3); margin-top: 4px; }
+  .kpi-corner { position: absolute; top: 12px; right: 12px; width: 5px; height: 5px; border-radius: 50%; }
+  .kpi.c-orange .kpi-corner { background: var(--accent); }
+  .kpi.c-green  .kpi-corner { background: var(--green); }
+  .kpi.c-yellow .kpi-corner { background: var(--yellow); }
+  .kpi.c-blue   .kpi-corner { background: var(--blue); }
+  .kpi.confirmed .kpi-foot { color: var(--green); font-weight: 700; }
+
+  /* ─── BOTTOM AREA ─── */
+  .bottom-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    overflow: hidden;
+  }
+
+  /* ─── CARD COMPACT ─── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    background: #fafaf9;
+    flex-shrink: 0;
+  }
+  .card-title-wrap { display: flex; align-items: baseline; gap: 8px; }
+  .card-title { font-size: 13px; font-weight: 700; font-family: 'Gowun Dodum', serif; }
+  .card-meta { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-3); }
+
+  /* ─── SCROLLABLE BODY ─── */
+  .card-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 10px;
+  }
+  .card-body::-webkit-scrollbar { width: 4px; }
+  .card-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+  /* ─── COMPACT TABLE ─── */
+  .item-table { width: 100%; border-collapse: collapse; }
+  .item-row {
+    display: grid;
+    grid-template-columns: 24px 1fr 65px 70px 65px;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 4px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-num { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); }
+  .item-name { font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .item-emoji { font-size: 13px; }
+  .item-qty { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; text-align: right; }
+  .item-qty-unit { font-size: 9px; color: var(--ink-3); margin-left: 1px; font-family: 'IBM Plex Sans KR'; font-weight: 400; }
+  .item-price { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right; color: var(--ink-2); transition: color 0.3s; }
+  .item-price.updated { color: var(--blue); }
+  .item-tier {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 4px;
+    border-radius: 2px;
+    text-align: center;
+  }
+  .tier-A { background: var(--accent-soft); color: var(--accent); }
+  .tier-B { background: var(--yellow-soft); color: var(--yellow); }
+  .tier-C { background: var(--green-soft); color: var(--green); }
+
+  /* ─── TIER CONFIG IN SIDEBAR ─── */
+  .sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tier-config {
+    border-top: 1px solid #333;
+    padding-top: 12px;
+  }
+  .tier-config-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .tier-config-title { font-family: 'Gowun Dodum', serif; font-size: 11px; font-weight: 700; color: #aaa; }
+  .tier-config-actions { display: flex; gap: 4px; }
+  .btn-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    background: none;
+    border: 1px solid;
+    padding: 2px 6px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .btn-tier-edit { color: #88c0ff; border-color: #3b82f6; }
+  .btn-tier-save { color: #8fd150; border-color: var(--green); display: none; }
+  .btn-tier-cancel { color: #ccc; border-color: #444; display: none; }
+
+  .tier-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .tier-cell { padding: 6px 8px; border-radius: 3px; font-size: 9px; line-height: 1.3; background: #2a2a2a; border: 1px solid #333; }
+  .tier-cell.edit-mode { background: #fff !important; color: #000; border: 1px solid #fff; }
+  .tier-cell.edit-mode .t-range { color: #666; }
+  .tier-cell.tier-A { border-left: 2px solid var(--accent); }
+  .tier-cell.tier-B { border-left: 2px solid var(--yellow); }
+  .tier-cell.tier-C { border-left: 2px solid var(--green); }
+  .tier-cell .t-range { font-family: 'JetBrains Mono', monospace; font-size: 8px; opacity: 0.7; }
+  .tier-cell .t-price { font-weight: 700; margin-top: 2px; }
+
+  .tier-price-input {
+    width: 100%;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    outline: none;
+    border-bottom: 1px solid #999;
+    padding: 1px 0;
+    color: #000;
+    text-align: center;
+  }
+
+  /* ─── RIGHT SECTION SPLIT ─── */
+  .right-split {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    overflow: hidden;
+  }
+
+  /* ─── BUYER LIST COMPACT ─── */
+  .buyer-list { display: flex; flex-direction: column; }
+  .buyer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 11px;
+  }
+  .buyer-row:last-child { border-bottom: none; }
+  .buyer-info { display: flex; align-items: center; gap: 8px; }
+  .buyer-avatar {
+    width: 20px; height: 20px;
+    background: var(--bg-soft);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Gowun Dodum', serif;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .buyer-name { font-weight: 500; }
+  .buyer-items { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-3); }
+  .buyer-amount { display: none; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+  /* ─── FEED COMPACT ─── */
+  .feed-list { display: flex; flex-direction: column; }
+  .feed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 11px;
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-time { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-3); width: 34px; flex-shrink: 0; }
+  .feed-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .feed-dot.new    { background: var(--accent); }
+  .feed-dot.edit   { background: var(--yellow); }
+  .feed-dot.cancel { background: var(--ink-3); }
+  .feed-dot.closed { background: var(--green); border-radius: 1px; margin-top: 5px; }
+  .feed-body { line-height: 1.3; }
+  .feed-buyer { font-weight: 600; }
+  .feed-action { font-size: 9px; color: var(--ink-3); margin-left: 2px; }
+  .feed-detail { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-2); }
+  .feed-closed-msg { font-weight: 600; color: var(--green); }
+
+  /* ─── STAMP COMPACT ─── */
+  .stamp {
+    position: absolute; bottom: 8px; right: 8px;
+    width: 60px; height: 60px;
+    border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Gowun Dodum', serif; font-weight: 700;
+    transform: rotate(-12deg); pointer-events: none; z-index: 10;
+  }
+  .stamp-1 { font-size: 6px; letter-spacing: 0.5px; }
+  .stamp-2 { font-size: 10px; }
+  .stamp-3 { font-size: 5px; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+    width: 340px;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.active .modal { transform: scale(1); }
+  .modal-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 4px; }
+  .modal-title { font-family: 'Gowun Dodum', serif; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .modal-stats { background: var(--bg-soft); border-radius: 4px; padding: 8px 10px; margin-bottom: 10px; }
+  .modal-stats-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; }
+  .modal-stats-row .value.hi { color: var(--accent); font-weight: 700; }
+  .modal-note { font-size: 10px; color: var(--ink-3); margin-bottom: 14px; padding: 6px; background: var(--accent-soft); border-left: 2px solid var(--accent); }
+  .modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; }
+  .btn-modal-cancel { background: none; border: 1px solid var(--line); padding: 8px; font-size: 12px; cursor: pointer; }
+  .btn-modal-confirm { background: var(--accent); border: none; padding: 8px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; }
+
+  /* ─── PROCESSING OVERLAY ─── */
+  .proc-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .proc-overlay.active { opacity: 1; pointer-events: all; }
+  .proc-box { text-align: center; color: white; }
+  .proc-spinner { width: 36px; height: 36px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #fff; border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .proc-check { display: none; width: 36px; height: 36px; border: 2px solid #8fd150; border-radius: 50%; align-items: center; justify-content: center; font-size: 16px; color: #8fd150; margin: 0 auto 16px; }
+  .proc-check.show { display: flex; }
+  .proc-step { font-family: 'Gowun Dodum', serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .proc-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #777; }
+  .proc-dots { display: flex; gap: 4px; justify-content: center; margin-top: 16px; }
+  .proc-dot { width: 4px; height: 4px; border-radius: 50%; background: #444; }
+  .proc-dot.active { background: #fff; }
+  .proc-dot.done   { background: #8fd150; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- SIDEBAR (LEFT) -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <div class="brand-mark">봉</div>
+        <div class="brand-text">
+          <div class="brand-name">봉봉마켓</div>
+          <div class="brand-sub">BONGBONG MARKET</div>
+        </div>
+      </div>
+
+      <div class="status-panel">
+        <div class="status-row">
+          <span class="status-label">DATE</span>
+          <span class="status-val" id="today-date"></span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">STATUS</span>
+          <span class="today-status" id="today-status">주문 접수중</span>
+        </div>
+      </div>
+
+      <!-- 마감 카드 -->
+      <div class="close-card" id="close-card">
+        <div class="close-open">
+          <div class="close-label">// CLOSED CONTROL</div>
+          <div class="close-title">오늘 주문 마감</div>
+          <div class="close-info">
+            <span id="elapsed">계산중...</span>
+            <span>47건 / 23명</span>
+          </div>
+          <button class="close-btn" onclick="openModal()">마감 처리 →</button>
+        </div>
+        <div class="close-done">
+          <span class="done-check">✓</span>
+          <div class="done-title">마감 완료</div>
+          <div class="done-stats">
+            <div id="done-time">마감 시각 —</div>
+            <div>47건 / 23명 참여</div>
+            <div>청구 ₩2,816,500</div>
+          </div>
+          <div class="done-badge">알림톡 23건 발송 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 단가 설정 및 푸터 -->
+    <div class="sidebar-bottom">
+      <!-- 단가 구간 설정 -->
+      <div class="tier-config">
+        <div class="tier-config-head">
+          <div class="tier-config-title">
+            💰 사과 단가 설정
+          </div>
+          <div class="tier-config-actions">
+            <button class="btn-tier btn-tier-edit" id="btn-edit" onclick="startTierEdit()">편집</button>
+            <button class="btn-tier btn-tier-save" id="btn-save" onclick="saveTierEdit()">저장</button>
+            <button class="btn-tier btn-tier-cancel" id="btn-cancel" onclick="cancelTierEdit()">취소</button>
+          </div>
+        </div>
+        <div class="tier-bar" id="tier-bar"></div>
+      </div>
+
+      <div class="stamp">
+        <div class="stamp-1">MVP</div>
+        <div class="stamp-2">시연용</div>
+        <div class="stamp-3">DEMO</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT (RIGHT) -->
+  <div class="main-content">
+
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi c-orange">
+        <span class="kpi-corner"></span>
+        <div class="kpi-label">오늘 주문 건수</div>
+        <div class="kpi-value">47<span class="kpi-unit">건</span></div>
+        <div class="kpi-foot">어제 대비 +12</div>
+      </div>
+      <div class="kpi c-green">
+        <span class="kpi-corner"></span>
+        <div class="kpi-label">참여 업자 수</div>
+        <div class="kpi-value">23<span class="kpi-unit">/30</span></div>
+        <div class="kpi-foot">77% 참여</div>
+      </div>
+      <div class="kpi c-yellow">
+        <span class="kpi-corner"></span>
+        <div class="kpi-label">주문 품목 수</div>
+        <div class="kpi-value">14<span class="kpi-unit">/20</span></div>
+        <div class="kpi-foot">6개 미주문</div>
+      </div>
+      <div class="kpi c-blue" id="kpi-revenue">
+        <span class="kpi-corner"></span>
+        <div class="kpi-label" id="kpi-revenue-label">예상 매출</div>
+        <div class="kpi-value">2.8<span class="kpi-unit">백만</span></div>
+        <div class="kpi-foot" id="kpi-revenue-foot">확정단가 기준</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="bottom-grid">
+
+      <!-- LEFT: ITEM TABLE -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title-wrap">
+            <div class="card-title">품목별 누적 주문</div>
+            <span class="card-meta" id="realtime-label">REAL-TIME</span>
+          </div>
+          <span class="card-meta" id="update-label">↻ 방금 업데이트</span>
+        </div>
+        <div class="card-body">
+          <div class="item-table">
+            <div class="item-row">
+              <div class="item-num">01</div>
+              <div class="item-name"><span class="item-emoji">🍎</span> 사과 (부사)</div>
+              <div class="item-qty">142<span class="item-qty-unit">박스</span></div>
+              <div class="item-price" id="price-apple">10,000원</div>
+              <div><span class="item-tier tier-C">TIER C</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">02</div>
+              <div class="item-name"><span class="item-emoji">🥬</span> 배추</div>
+              <div class="item-qty">86<span class="item-qty-unit">포기</span></div>
+              <div class="item-price">3,500원</div>
+              <div><span class="item-tier tier-B">TIER B</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">03</div>
+              <div class="item-name"><span class="item-emoji">🥕</span> 당근</div>
+              <div class="item-qty">68<span class="item-qty-unit">kg</span></div>
+              <div class="item-price">2,200원</div>
+              <div><span class="item-tier tier-B">TIER B</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">04</div>
+              <div class="item-name"><span class="item-emoji">🧅</span> 양파</div>
+              <div class="item-qty">55<span class="item-qty-unit">망</span></div>
+              <div class="item-price">8,500원</div>
+              <div><span class="item-tier tier-B">TIER B</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">05</div>
+              <div class="item-name"><span class="item-emoji">🥔</span> 감자</div>
+              <div class="item-qty">42<span class="item-qty-unit">kg</span></div>
+              <div class="item-price">1,800원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">06</div>
+              <div class="item-name"><span class="item-emoji">🥒</span> 오이</div>
+              <div class="item-qty">38<span class="item-qty-unit">박스</span></div>
+              <div class="item-price">12,000원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">07</div>
+              <div class="item-name"><span class="item-emoji">🍅</span> 토마토</div>
+              <div class="item-qty">35<span class="item-qty-unit">박스</span></div>
+              <div class="item-price">15,000원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">08</div>
+              <div class="item-name"><span class="item-emoji">🌶️</span> 청양고추</div>
+              <div class="item-qty">22<span class="item-qty-unit">kg</span></div>
+              <div class="item-price">9,500원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">09</div>
+              <div class="item-name"><span class="item-emoji">🍇</span> 포도</div>
+              <div class="item-qty">18<span class="item-qty-unit">박스</span></div>
+              <div class="item-price">18,000원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">10</div>
+              <div class="item-name"><span class="item-emoji">🍓</span> 딸기</div>
+              <div class="item-qty">15<span class="item-qty-unit">박스</span></div>
+              <div class="item-price">14,000원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">11</div>
+              <div class="item-name"><span class="item-emoji">🍌</span> 바나나</div>
+              <div class="item-qty">12<span class="item-qty-unit">송이</span></div>
+              <div class="item-price">4,500원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+            <div class="item-row">
+              <div class="item-num">12</div>
+              <div class="item-name"><span class="item-emoji">🍐</span> 배</div>
+              <div class="item-qty">10<span class="item-qty-unit">박스</span></div>
+              <div class="item-price">22,000원</div>
+              <div><span class="item-tier tier-A">TIER A</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: SPLIT (BUYERS & FEED) -->
+      <div class="right-split">
+        <!-- 업자별 주문 -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title-wrap">
+              <div class="card-title">업자별 주문 (23)</div>
+            </div>
+            <span class="card-meta" id="buyer-meta">TOP 8</span>
+          </div>
+          <div class="card-body">
+            <div class="buyer-list">
+              <div class="buyer-row" data-amount="428,000원">
+                <div class="buyer-info">
+                  <div class="buyer-avatar">김</div>
+                  <span class="buyer-name">김씨네 마트</span>
+                </div>
+                <span class="buyer-items">6품목 · 14건</span>
+                <span class="buyer-amount"></span>
+              </div>
+              <div class="buyer-row" data-amount="214,500원">
+                <div class="buyer-info">
+                  <div class="buyer-avatar">박</div>
+                  <span class="buyer-name">박반찬</span>
+                </div>
+                <span class="buyer-items">5품목 · 9건</span>
+                <span class="buyer-amount"></span>
+              </div>
+              <div class="buyer-row" data-amount="312,000원">
+                <div class="buyer-info">
+                  <div class="buyer-avatar">이</div>
+                  <span class="buyer-name">이마트 합정</span>
+                </div>
+                <span class="buyer-items">4품목 · 6건</span>
+                <span class="buyer-amount"></span>
+              </div>
+              <div class="buyer-row" data-amount="187,500원">
+                <div class="buyer-info">
+                  <div class="buyer-avatar">최</div>
+                  <span class="buyer-name">최씨 식자재</span>
+                </div>
+                <span class="buyer-items">3품목 · 5건</span>
+                <span class="buyer-amount"></span>
+              </div>
+              <div class="buyer-row" data-amount="156,200원">
+                <div class="buyer-info">
+                  <div class="buyer-avatar">한</div>
+                  <span class="buyer-name">한솔 도소매</span>
+                </div>
+                <span class="buyer-items">3품목 · 4건</span>
+                <span class="buyer-amount"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 실시간 주문 흐름 -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title-wrap">
+              <div class="card-title">실시간 주문 흐름</div>
+            </div>
+            <span class="card-meta">LIVE</span>
+          </div>
+          <div class="card-body">
+            <div class="feed-list" id="feed-list">
+              <div class="feed-item">
+                <div class="feed-time">14:23</div>
+                <div class="feed-dot new"></div>
+                <div class="feed-body">
+                  <span class="feed-buyer">김씨네 마트</span><span class="feed-action">주문</span>
+                  <div class="feed-detail">사과 20박스</div>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-time">14:18</div>
+                <div class="feed-dot edit"></div>
+                <div class="feed-body">
+                  <span class="feed-buyer">박반찬</span><span class="feed-action">수정</span>
+                  <div class="feed-detail">배추 10 → 15포기</div>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-time">14:11</div>
+                <div class="feed-dot new"></div>
+                <div class="feed-body">
+                  <span class="feed-buyer">한솔 도소매</span><span class="feed-action">주문</span>
+                  <div class="feed-detail">양파 8망, 당근 5kg</div>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-time">14:02</div>
+                <div class="feed-dot cancel"></div>
+                <div class="feed-body">
+                  <span class="feed-buyer">정육각</span><span class="feed-action">취소</span>
+                  <div class="feed-detail">감자 3kg</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── 마감 확인 모달 ─── -->
+<div class="modal-overlay" id="modal-close">
+  <div class="modal">
+    <div class="modal-label">// CONFIRM CLOSE</div>
+    <div class="modal-title">오늘 주문을 마감하시겠습니까?</div>
+    <div class="modal-stats">
+      <div class="modal-stats-row">
+        <span class="label">총 주문 건수</span>
+        <span class="value">47건</span>
+      </div>
+      <div class="modal-stats-row">
+        <span class="label">참여 업자</span>
+        <span class="value">23명</span>
+      </div>
+      <div class="modal-stats-row">
+        <span class="label">주문 품목</span>
+        <span class="value">14종</span>
+      </div>
+      <div class="modal-stats-row">
+        <span class="label">예상 청구 총액</span>
+        <span class="value hi">₩2,816,500</span>
+      </div>
+    </div>
+    <div class="modal-note">
+      마감 후 신규·수정·취소 주문이 차단되며,<br>
+      업자별 확정단가와 청구금액이 <strong>알림톡으로 자동 발송</strong>됩니다.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-modal-confirm" onclick="processClose()">마감 확정 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 처리 오버레이 ─── -->
+<div class="proc-overlay" id="proc-overlay">
+  <div class="proc-box">
+    <div class="proc-spinner" id="proc-spinner"></div>
+    <div class="proc-check" id="proc-check">✓</div>
+    <div class="proc-step" id="proc-step">준비 중...</div>
+    <div class="proc-sub"   id="proc-sub"></div>
+    <div class="proc-dots">
+      <div class="proc-dot" id="d0"></div>
+      <div class="proc-dot" id="d1"></div>
+      <div class="proc-dot" id="d2"></div>
+      <div class="proc-dot" id="d3"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ─── STATE ─── */
+  let isClosed = false;
+
+  /* ─── TIER DATA ─── */
+  const TIER_LABELS  = ['~ 50박스', '51 ~ 100박스', '101박스 ~'];
+  const TIER_CLASSES = ['tier-A', 'tier-B', 'tier-C'];
+  let tierPrices = [15000, 12000, 10000];
+
+  /* ─── INIT ─── */
+  (function init() {
+    // Today date
+    const now = new Date();
+    const days = ['일','월','화','수','목','금','토'];
+    const y = now.getFullYear();
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const d = String(now.getDate()).padStart(2,'0');
+    document.getElementById('today-date').textContent =
+      `${y}. ${m}. ${d} (${days[now.getDay()]})`;
+
+    renderTierBar();
+    startTimer();
+  })();
+
+  /* ─── TIMER ─── */
+  function startTimer() {
+    function tick() {
+      if (isClosed) return;
+      const now = new Date();
+      const start = new Date(now);
+      start.setHours(8, 0, 0, 0);
+      const sec = Math.max(0, Math.floor((now - start) / 1000));
+      const h = String(Math.floor(sec / 3600)).padStart(2,'0');
+      const m = String(Math.floor((sec % 3600) / 60)).padStart(2,'0');
+      const s = String(sec % 60).padStart(2,'0');
+      const el = document.getElementById('elapsed');
+      if (el) el.textContent = `${h}:${m}:${s}`;
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  /* ─── TIER EDIT ─── */
+  function renderTierBar(editing = false) {
+    document.getElementById('tier-bar').innerHTML = TIER_CLASSES.map((cls, i) => {
+      if (editing) {
+        return `
+          <div class="tier-cell ${cls} edit-mode">
+            <div class="t-range">${TIER_LABELS[i]}</div>
+            <input class="tier-price-input" id="tp${i}"
+                   type="text"
+                   value="${tierPrices[i].toLocaleString()}"
+                   onfocus="this.select()">
+          </div>`;
+      }
+      return `
+        <div class="tier-cell ${cls}">
+          <div class="t-range">${TIER_LABELS[i]}</div>
+          <div class="t-price">${tierPrices[i].toLocaleString()}원</div>
+        </div>`;
+    }).join('');
+  }
+
+  function startTierEdit() {
+    renderTierBar(true);
+    document.getElementById('btn-edit').style.display   = 'none';
+    document.getElementById('btn-save').style.display   = 'inline-block';
+    document.getElementById('btn-cancel').style.display = 'inline-block';
+    document.getElementById('tp0').focus();
+  }
+
+  function saveTierEdit() {
+    for (let i = 0; i < 3; i++) {
+      const v = parseInt((document.getElementById('tp'+i).value || '').replace(/[^0-9]/g, ''));
+      if (!isNaN(v) && v > 0) tierPrices[i] = v;
+    }
+    endTierEdit();
+
+    // 사과 142박스 → tier C (index 2) → update price display
+    const priceEl = document.getElementById('price-apple');
+    const newPrice = tierPrices[2].toLocaleString() + '원';
+    if (priceEl.textContent !== newPrice) {
+      priceEl.textContent = newPrice;
+      priceEl.classList.add('updated');
+      setTimeout(() => priceEl.classList.remove('updated'), 1200);
+    }
+  }
+
+  function cancelTierEdit() { endTierEdit(); }
+
+  function endTierEdit() {
+    renderTierBar(false);
+    document.getElementById('btn-edit').style.display   = 'inline-block';
+    document.getElementById('btn-save').style.display   = 'none';
+    document.getElementById('btn-cancel').style.display = 'none';
+  }
+
+  /* ─── CLOSE MODAL ─── */
+  function openModal()  { document.getElementById('modal-close').classList.add('active'); }
+  function closeModal() { document.getElementById('modal-close').classList.remove('active'); }
+
+  /* ─── CLOSE PROCESSING ─── */
+  async function processClose() {
+    closeModal();
+
+    const overlay = document.getElementById('proc-overlay');
+    overlay.classList.add('active');
+
+    const steps = [
+      { text: '단가 확정 중...',       sub: 'CALCULATING TIER PRICES', ms: 1300 },
+      { text: '청구금액 계산 중...',   sub: '47건 · 23명 처리',        ms: 1050 },
+      { text: '알림톡 발송 중...',     sub: 'SENDING 23 MESSAGES',     ms: 1200 },
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      await fadeText(steps[i].text, steps[i].sub);
+      dotState(i, 'active');
+      await sleep(steps[i].ms);
+      dotState(i, 'done');
+    }
+
+    // Final: hide spinner → show checkmark
+    document.getElementById('proc-spinner').style.display = 'none';
+    document.getElementById('proc-check').classList.add('show');
+    await fadeText('마감 완료', '모든 처리 완료');
+    dotState(3, 'done');
+    await sleep(900);
+
+    overlay.classList.remove('active');
+    await sleep(280);
+    transitionToClosed();
+  }
+
+  async function fadeText(text, sub) {
+    const sEl = document.getElementById('proc-step');
+    const bEl = document.getElementById('proc-sub');
+    sEl.style.opacity = '0'; bEl.style.opacity = '0';
+    await sleep(160);
+    sEl.textContent = text; bEl.textContent = sub;
+    sEl.style.opacity = '1'; bEl.style.opacity = '1';
+  }
+
+  function dotState(idx, state) {
+    for (let j = 0; j <= idx; j++) {
+      const el = document.getElementById('d'+j);
+      if (el) el.className = 'proc-dot ' + (j < idx ? 'done' : state);
+    }
+  }
+
+  /* ─── CLOSED STATE ─── */
+  function transitionToClosed() {
+    isClosed = true;
+
+    // Header
+    const st = document.getElementById('today-status');
+    st.className = 'today-status closed';
+    st.textContent = '마감 완료';
+
+    // Close card
+    document.getElementById('close-card').classList.add('done');
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('done-time').textContent = `마감  ${hh}:${mm}`;
+
+    // KPI
+    document.getElementById('kpi-revenue-label').textContent = '확정 총 매출';
+    document.getElementById('kpi-revenue-foot').textContent  = '✓ 마감 확정';
+    document.getElementById('kpi-revenue').classList.add('confirmed');
+
+    // Card labels
+    document.getElementById('realtime-label').textContent = 'CLOSED';
+    document.getElementById('update-label').textContent   = `${hh}:${mm} 마감`;
+    document.getElementById('buyer-meta').textContent     = '청구금액';
+
+    // Buyer amounts — staggered reveal
+    document.querySelectorAll('.buyer-row').forEach((row, i) => {
+      setTimeout(() => {
+        const amt = row.getAttribute('data-amount');
+        row.querySelector('.buyer-items').style.display = 'none';
+        const amtEl = row.querySelector('.buyer-amount');
+        amtEl.textContent = amt;
+        amtEl.style.display = 'inline';
+      }, i * 130);
+    });
+
+    // Feed: prepend close entry
+    const feed = document.getElementById('feed-list');
+    const entry = document.createElement('div');
+    entry.className = 'feed-item';
+    entry.innerHTML = `
+      <div class="feed-time">${hh}:${mm}</div>
+      <div class="feed-dot closed"></div>
+      <div class="feed-body">
+        <span class="feed-closed-msg">마감 완료</span>
+        <div class="feed-detail">47건 · 23명 · ₩2,816,500</div>
+      </div>`;
+    feed.insertBefore(entry, feed.firstChild);
+  }
+
+  /* ─── UTIL ─── */
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+
+</body>
+</html>
