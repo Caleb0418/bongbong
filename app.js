@@ -196,8 +196,31 @@ class BongBongStore {
         window.dispatchEvent(new Event('storage'));
     }
 
+    static getAnalyticsBuyers() {
+        const buyers = localStorage.getItem("bb_analytics_buyers");
+        if (!buyers) {
+            localStorage.setItem("bb_analytics_buyers", JSON.stringify(ANALYTICS_DATA.buyers));
+            return ANALYTICS_DATA.buyers;
+        }
+        return JSON.parse(buyers);
+    }
+
+    static saveAnalyticsBuyers(buyers) {
+        localStorage.setItem("bb_analytics_buyers", JSON.stringify(buyers));
+    }
+
+    static updateBuyerStatus(buyerName, newStatus) {
+        let buyers = this.getAnalyticsBuyers();
+        buyers = buyers.map(buyer => buyer.name === buyerName ? { ...buyer, status: newStatus } : buyer);
+        this.saveAnalyticsBuyers(buyers);
+        this.dispatchStorageChange();
+    }
+
     static getAnalyticsData() {
-        return ANALYTICS_DATA;
+        return {
+            ...ANALYTICS_DATA,
+            buyers: this.getAnalyticsBuyers()
+        };
     }
 }
 
