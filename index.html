@@ -255,10 +255,16 @@
                             <span class="material-symbols-outlined">receipt_long</span>
                             실시간 카카오 취합 내역
                         </h3>
-                        <button id="add-order-btn" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">add</span>
-                            전화 주문 수기 추가
-                        </button>
+                        <div class="flex gap-2">
+                            <button id="bulk-edit-btn" onclick="toggleBulkEdit(true)" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                                일괄 수정
+                            </button>
+                            <button id="add-order-btn" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">add</span>
+                                전화 주문 수기 추가
+                            </button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -270,7 +276,7 @@
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">접수시각</th>
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">상태</th>
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right" id="manage-header-cell">
-                                        <button onclick="toggleBulkEdit(true)" class="bg-[#002045]/10 hover:bg-[#002045]/20 text-[#002045] px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-0.5 ml-auto">수정</button>
+                                        관리
                                     </th>
                                 </tr>
                             </thead>
@@ -673,21 +679,23 @@
             const orders = BongBongStore.getOrders();
             const isClosed = BongBongStore.isClosed();
 
-            // 0. 관리 헤더 버튼 업데이트 (isBulkEditing 여부에 따른 토글)
-            const manageHeaderCell = document.getElementById("manage-header-cell");
-            if (manageHeaderCell) {
+            // 0. 일괄 수정 버튼 상태 업데이트
+            const bulkEditBtn = document.getElementById("bulk-edit-btn");
+            if (bulkEditBtn) {
                 if (isBulkEditing) {
-                    manageHeaderCell.innerHTML = `
-                        <button onclick="toggleBulkEdit(false)" class="bg-secondary hover:bg-opacity-95 text-white px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-0.5 ml-auto">
-                            완료
-                        </button>
+                    bulkEditBtn.innerHTML = `
+                        <span class="material-symbols-outlined text-sm">done</span>
+                        완료
                     `;
+                    bulkEditBtn.className = "bg-secondary hover:bg-opacity-90 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1";
+                    bulkEditBtn.setAttribute("onclick", "toggleBulkEdit(false)");
                 } else {
-                    manageHeaderCell.innerHTML = `
-                        <button onclick="toggleBulkEdit(true)" class="bg-[#002045]/10 hover:bg-[#002045]/20 text-[#002045] px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-0.5 ml-auto">
-                            수정
-                        </button>
+                    bulkEditBtn.innerHTML = `
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                        일괄 수정
                     `;
+                    bulkEditBtn.className = "bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1";
+                    bulkEditBtn.setAttribute("onclick", "toggleBulkEdit(true)");
                 }
             }
 
