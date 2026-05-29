@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>봉봉 마켓 - 통합 프로토타입 테스트 환경</title>
+    <title>별미집 - 통합 프로토타입 테스트 환경</title>
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -57,7 +57,7 @@
         <div>
             <h1 class="text-xl font-extrabold text-white flex items-center gap-2">
                 <span class="material-symbols-outlined text-green-400">labs</span>
-                봉봉 마켓 (BongBong Market) MVP 통합 테스트 베드
+                별미집 (Byeolmijip) MVP 통합 테스트 베드
             </h1>
             <p class="text-xs text-slate-400 mt-1">이 화면은 PRD 및 스티치 코드를 기반으로 제작된 동시 검증 환경입니다. 왼쪽 모바일로 주문하면 오른쪽 대시보드에 실시간 반영됩니다.</p>
         </div>
@@ -132,8 +132,9 @@
                 if (adminFrame.contentWindow.renderAdminDashboard) {
                     adminFrame.contentWindow.renderAdminDashboard();
                 }
-                if (buyerFrame.contentWindow.location.reload) {
-                    // 주문서 상태 갱신
+                
+                // 주문 내역(bb_orders)이 변경된 경우에는 구매자 화면을 리로드하지 않음 (바텀 시트 노출 유지)
+                if (buyerFrame.contentWindow.location.reload && (e.key === 'bb_is_closed' || e.key === 'bb_items')) {
                     buyerFrame.contentWindow.location.reload();
                 }
             }
