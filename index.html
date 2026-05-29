@@ -711,7 +711,7 @@
                 const item = items.find(i => i.id === order.itemId);
                 const statusColor = order.status === "대기" 
                     ? "bg-blue-100 text-blue-700" 
-                    : order.status === "확정" 
+                    : order.status === "승인" 
                     ? "bg-green-100 text-green-700" 
                     : order.status === "배송중"
                     ? "bg-yellow-100 text-yellow-700"
@@ -759,9 +759,9 @@
                             <td class="px-6 py-4 text-sm font-semibold">${order.qty} ${item ? item.unit : '박스'}</td>
                             <td class="px-6 py-4 text-sm text-gray-400 font-mono">${order.time}</td>
                             <td class="px-6 py-4">
-                                <select onchange="changeOrderStatus(${order.id}, this.value)" class="text-xs font-bold rounded-full px-2.5 py-1 border-0 outline-none focus:ring-0 appearance-none text-center ${statusColor} cursor-pointer">
+                                <select onchange="changeOrderStatus(${order.id}, this.value)" class="text-xs font-bold rounded-full pr-8 pl-3.5 py-1.5 border-0 outline-none focus:ring-0 appearance-none text-left ${statusColor} cursor-pointer bg-[right_0.5rem_center] bg-no-repeat bg-[length:12px_12px]">
                                     <option value="대기" ${order.status === '대기' ? 'selected' : ''}>대기</option>
-                                    <option value="확정" ${order.status === '확정' ? 'selected' : ''}>확정</option>
+                                    <option value="승인" ${order.status === '승인' ? 'selected' : ''}>승인</option>
                                     <option value="배송중" ${order.status === '배송중' ? 'selected' : ''}>배송중</option>
                                     <option value="배송완료" ${order.status === '배송완료' ? 'selected' : ''}>배송완료</option>
                                 </select>
@@ -831,14 +831,14 @@
                 return;
             }
 
-            if (confirm(`현재 대기 중인 ${pendingOrders.length}건의 주문을 일괄 승인(확정)하시겠습니까?`)) {
+            if (confirm(`현재 대기 중인 ${pendingOrders.length}건의 주문을 일괄 승인하시겠습니까?`)) {
                 orders.forEach(o => {
-                    if (o.status === "대기") o.status = "확정";
+                    if (o.status === "대기") o.status = "승인";
                 });
                 BongBongStore.saveOrders(orders);
                 renderAdminDashboard();
                 BongBongStore.dispatchStorageChange();
-                alert(`${pendingOrders.length}건의 주문이 최종 승인(확정)되었습니다.`);
+                alert(`${pendingOrders.length}건의 주문이 최종 승인되었습니다.`);
             }
         });
 

@@ -72,10 +72,10 @@ const DEFAULT_ITEMS = [
 ];
 
 const DEFAULT_ORDERS = [
-    { id: 1, buyerName: "김선호", itemId: "potato", qty: 5, time: "14:22", status: "확정" },
+    { id: 1, buyerName: "김선호", itemId: "potato", qty: 5, time: "14:22", status: "승인" },
     { id: 2, buyerName: "박민지 (맘공구)", itemId: "onion", qty: 12, time: "14:15", status: "대기" },
     { id: 3, buyerName: "이정재", itemId: "potato", qty: 20, time: "13:45", status: "배송중" },
-    { id: 4, buyerName: "최유진 (마트)", itemId: "garlic", qty: 8, time: "13:30", status: "확정" },
+    { id: 4, buyerName: "최유진 (마트)", itemId: "garlic", qty: 8, time: "13:30", status: "승인" },
     { id: 5, buyerName: "정해인", itemId: "potato", qty: 15, time: "13:10", status: "대기" }
 ];
 
