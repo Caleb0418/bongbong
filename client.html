@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>올바른 선택 봉봉마켓 - 도매 발주</title>
+    <title>올바른 선택 별미집 - 도매 발주</title>
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -60,7 +60,7 @@
             <span class="material-symbols-outlined text-gray-400 cursor-pointer" onclick="window.close();">arrow_back</span>
             <div class="text-center">
                 <span class="text-xs tracking-widest text-gray-400 font-semibold block mb-0.5">올바른 선택</span>
-                <h1 class="font-serif text-xl font-bold tracking-tight text-brandDark">봉봉마켓</h1>
+                <h1 class="font-serif text-xl font-bold tracking-tight text-brandDark">별미집</h1>
             </div>
             <div class="flex items-center gap-3 text-gray-500">
                 <span class="material-symbols-outlined cursor-pointer" onclick="location.reload();">refresh</span>
@@ -153,7 +153,7 @@
     <!-- Footer Area (Synced with Cafe24 Screenshot) -->
     <footer class="p-6 bg-neutralBg border-t border-gray-200/60 text-[11px] text-gray-500 space-y-4">
         <div class="space-y-1">
-            <h4 class="font-serif text-sm font-bold text-brandDark mb-2">올바른 선택 봉봉마켓</h4>
+            <h4 class="font-serif text-sm font-bold text-brandDark mb-2">올바른 선택 별미집</h4>
             <p>상호명: 우모유통 | 대표자명: 김봉준</p>
             <p>사업장 주소: 22350 인천광역시 중구 연안부두로107번길 34 2동 2층 2호(항동7가)</p>
             <p>대표전화: 010-8990-9951 | 사업자 등록번호: 855-49-00656</p>
@@ -164,9 +164,48 @@
             <p>국민은행 64680101557728 김봉준(우모유통)</p>
         </div>
         <p class="text-[10px] text-gray-400 pt-2 border-t border-gray-200/40">
-            Copyright © 봉봉마켓. All Rights Reserved. Hosting by Cafe24 Corp.
+            Copyright © 별미집. All Rights Reserved. Hosting by Cafe24 Corp.
         </p>
     </footer>
+
+    <!-- Order Success Bottom Sheet Drawer -->
+    <div id="order-success-drawer" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
+        <div class="bg-white rounded-t-3xl w-full max-w-[480px] p-6 space-y-6 shadow-2xl transform translate-y-full transition-transform duration-300 ease-out border-t border-gray-100 flex flex-col">
+            <!-- Pull Bar -->
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto cursor-pointer" onclick="closeOrderSuccessDrawer()"></div>
+            
+            <!-- Success Status Icon -->
+            <div class="text-center space-y-2 pt-2">
+                <div class="w-16 h-16 rounded-full bg-green-50 text-brandAccent flex items-center justify-center mx-auto shadow-inner">
+                    <span class="material-symbols-outlined text-3xl font-bold">check_circle</span>
+                </div>
+                <h3 class="font-serif text-lg font-bold text-gray-900">도매 발주 전송 완료</h3>
+                <p class="text-xs text-gray-400">성공적으로 발주서 사본이 카카오톡 망으로 자동 전송되었습니다.</p>
+            </div>
+
+            <!-- Receipt Summary Box -->
+            <div class="bg-neutralBg rounded-2xl p-4 border border-gray-100 space-y-3 text-left">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-gray-400 font-bold">발주 처</span>
+                    <span class="font-bold text-gray-900" id="receipt-buyer">--</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-gray-400 font-bold">발주 품목</span>
+                    <span class="font-bold text-gray-900" id="receipt-item">--</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-gray-400 font-bold">발주 수량</span>
+                    <span class="font-bold text-gray-900 text-sm" id="receipt-qty">0박스</span>
+                </div>
+            </div>
+
+            <!-- Confirm Button -->
+            <button onclick="closeOrderSuccessDrawer()" class="w-full bg-brandDark hover:bg-black text-white font-bold py-4 rounded-xl shadow-sm text-sm active:scale-98 transition-all flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">done</span>
+                주문 확인 완료
+            </button>
+        </div>
+    </div>
 </div>
 
 <script src="app.js"></script>
@@ -216,7 +255,9 @@
             BongBongStore.addOrder(buyerName, itemId, qty);
 
             const items = BongBongStore.getItems();
-            alert(`발주서가 전송되었습니다!\n\n발주처: ${buyerName}\n품목: ${items.find(i=>i.id===itemId).name}\n수량: ${qty}박스\n\n* 카카오톡 대화방으로 발주 요약서 사본이 자동 전송되었습니다.`);
+            const itemName = items.find(i=>i.id===itemId).name;
+            
+            openOrderSuccessDrawer(buyerName, itemName, qty);
             
             renderPage();
             qtyInput.value = 5;
@@ -303,6 +344,30 @@
             }
         }
     }
+
+    window.openOrderSuccessDrawer = function(buyerName, itemName, qty) {
+        const drawer = document.getElementById("order-success-drawer");
+        const inner = drawer.querySelector("div");
+        
+        document.getElementById("receipt-buyer").textContent = buyerName;
+        document.getElementById("receipt-item").textContent = itemName;
+        document.getElementById("receipt-qty").textContent = qty + "박스";
+        
+        drawer.classList.remove("hidden");
+        setTimeout(() => {
+            inner.classList.remove("translate-y-full");
+        }, 10);
+    };
+
+    window.closeOrderSuccessDrawer = function() {
+        const drawer = document.getElementById("order-success-drawer");
+        const inner = drawer.querySelector("div");
+        
+        inner.classList.add("translate-y-full");
+        setTimeout(() => {
+            drawer.classList.add("hidden");
+        }, 300);
+    };
 </script>
 </body>
 </html>
