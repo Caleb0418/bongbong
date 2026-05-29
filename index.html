@@ -269,7 +269,9 @@
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">수량</th>
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">접수시각</th>
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">상태</th>
-                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">관리</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right" id="manage-header-cell">
+                                        <button onclick="toggleBulkEdit(true)" class="bg-[#002045]/10 hover:bg-[#002045]/20 text-[#002045] px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-0.5 ml-auto">수정</button>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="order-table-body" class="divide-y divide-gray-100">
@@ -454,9 +456,9 @@
 
 <script src="app.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        let editingOrderId = null;
+    let isBulkEditing = false;
 
+    document.addEventListener("DOMContentLoaded", () => {
         // Elements
         const orderTableBody = document.getElementById("order-table-body");
         const totalQtyCounter = document.getElementById("total-qty-counter");
@@ -479,9 +481,32 @@
 
         // Core Render Function
         window.renderAdminDashboard = function() {
+            // 일괄 편집 모드일 때 3초 타이머나 외부 스토리지 싱크로 인한 자동 리렌더링 강제 차단 (입력값 보존)
+            // 단, toggleBulkEdit 내부에서 수동 호출 시에는 리렌더링을 허용하기 위해 인자를 사용
+            const isManualCall = arguments[0] === true;
+            if (isBulkEditing && !isManualCall) return;
+
             const items = BongBongStore.getItems();
             const orders = BongBongStore.getOrders();
             const isClosed = BongBongStore.isClosed();
+
+            // 0. 관리 헤더 버튼 업데이트 (isBulkEditing 여부에 따른 토글)
+            const manageHeaderCell = document.getElementById("manage-header-cell");
+            if (manageHeaderCell) {
+                if (isBulkEditing) {
+                    manageHeaderCell.innerHTML = `
+                        <button onclick="toggleBulkEdit(false)" class="bg-secondary hover:bg-opacity-95 text-white px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-0.5 ml-auto">
+                            완료
+                        </button>
+                    `;
+                } else {
+                    manageHeaderCell.innerHTML = `
+                        <button onclick="toggleBulkEdit(true)" class="bg-[#002045]/10 hover:bg-[#002045]/20 text-[#002045] px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-0.5 ml-auto">
+                            수정
+                        </button>
+                    `;
+                }
+            }
 
             // 1. 마감 배지 업데이트
             if (isClosed) {
@@ -516,7 +541,7 @@
                     ? "bg-yellow-100 text-yellow-700"
                     : "bg-gray-100 text-gray-700";
 
-                const isEditing = order.id === editingOrderId;
+                const isEditing = isBulkEditing;
 
                 let tr = "";
                 if (isEditing) {
@@ -526,7 +551,7 @@
                     });
 
                     tr = `
-                        <tr class="bg-blue-50/30 border-b border-blue-100 h-16">
+                        <tr class="bg-blue-50/20 border-b border-blue-100 h-16" data-order-id="${order.id}">
                             <td class="px-6 py-2">
                                 <input type="text" id="edit-row-buyer-${order.id}" value="${order.buyerName}" class="w-full text-xs font-bold border-gray-200 rounded-xl p-1.5 focus:border-primary focus:ring-primary">
                             </td>
@@ -541,17 +566,12 @@
                             </td>
                             <td class="px-6 py-2 text-xs text-gray-400 font-mono">${order.time}</td>
                             <td class="px-6 py-2">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">수정 중</span>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">편집 중</span>
                             </td>
                             <td class="px-6 py-2 text-right">
-                                <div class="flex gap-2 justify-end">
-                                    <button onclick="saveRowChange(${order.id})" class="text-green-600 hover:text-green-800 flex items-center" title="저장">
-                                        <span class="material-symbols-outlined text-lg font-bold">check</span>
-                                    </button>
-                                    <button onclick="cancelRowEdit()" class="text-gray-400 hover:text-gray-600 flex items-center" title="취소">
-                                        <span class="material-symbols-outlined text-lg font-bold">close</span>
-                                    </button>
-                                </div>
+                                <button onclick="deleteRow(${order.id})" class="text-red-500 hover:text-red-700 flex items-center justify-end ml-auto" title="이 주문 삭제">
+                                    <span class="material-symbols-outlined text-lg">close</span>
+                                </button>
                             </td>
                         </tr>
                     `;
@@ -570,16 +590,7 @@
                                     <option value="배송완료" ${order.status === '배송완료' ? 'selected' : ''}>배송완료</option>
                                 </select>
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex gap-2.5 justify-end text-gray-400">
-                                    <button onclick="editRow(${order.id})" class="hover:text-primary flex items-center" title="주문 수정">
-                                        <span class="material-symbols-outlined text-md">edit</span>
-                                    </button>
-                                    <button onclick="deleteRow(${order.id})" class="hover:text-red-600 flex items-center" title="주문 삭제">
-                                        <span class="material-symbols-outlined text-md">delete</span>
-                                    </button>
-                                </div>
-                            </td>
+                            <td class="px-6 py-4 text-right text-gray-300">-</td>
                         </tr>
                     `;
                 }
@@ -1130,35 +1141,61 @@
         renderAdminDashboard();
     };
 
-    window.editRow = function(orderId) {
-        editingOrderId = orderId;
-        renderAdminDashboard();
-    };
+    window.toggleBulkEdit = function(active) {
+        if (!active) {
+            // 완료를 눌러 저장을 시도하는 경우
+            const orders = BongBongStore.getOrders();
+            const updatedOrders = [];
+            let hasError = false;
 
-    window.cancelRowEdit = function() {
-        editingOrderId = null;
-        renderAdminDashboard();
-    };
+            for (let i = 0; i < orders.length; i++) {
+                const order = orders[i];
+                const buyerInput = document.getElementById(`edit-row-buyer-${order.id}`);
+                const itemSelect = document.getElementById(`edit-row-item-${order.id}`);
+                const qtyInput = document.getElementById(`edit-row-qty-${order.id}`);
 
-    window.saveRowChange = function(orderId) {
-        const buyerName = document.getElementById(`edit-row-buyer-${orderId}`).value.trim();
-        const itemId = document.getElementById(`edit-row-item-${orderId}`).value;
-        const qty = parseInt(document.getElementById(`edit-row-qty-${orderId}`).value, 10);
-        
-        if (!buyerName || isNaN(qty) || qty < 1) {
-            alert("구매자명과 올바른 수량을 입력해 주세요.");
-            return;
+                if (buyerInput && itemSelect && qtyInput) {
+                    const buyerName = buyerInput.value.trim();
+                    const itemId = itemSelect.value;
+                    const qty = parseInt(qtyInput.value, 10);
+
+                    if (!buyerName || isNaN(qty) || qty < 1) {
+                        hasError = true;
+                        break;
+                    }
+
+                    updatedOrders.push({
+                        ...order,
+                        buyerName,
+                        itemId,
+                        qty
+                    });
+                } else {
+                    updatedOrders.push(order);
+                }
+            }
+
+            if (hasError) {
+                alert("구매자명과 올바른 수량(1개 이상)을 입력해 주세요.");
+                return;
+            }
+
+            // 일괄 저장 실행
+            BongBongStore.saveOrders(updatedOrders);
+            // 강제 리렌더링 허용을 위해 renderAdminDashboard(true)를 수동 트리거하고 storage 이벤트를 발생시킴
+            BongBongStore.dispatchStorageChange();
         }
 
-        BongBongStore.updateOrder(orderId, { buyerName, itemId, qty });
-        editingOrderId = null;
-        renderAdminDashboard();
+        isBulkEditing = active;
+        // renderAdminDashboard(true)를 전달하여 강제 리렌더링 수행
+        renderAdminDashboard(true);
     };
 
     window.deleteRow = function(orderId) {
         if (confirm("이 주문을 정말 삭제하시겠습니까?")) {
             BongBongStore.deleteOrder(orderId);
-            renderAdminDashboard();
+            // 삭제 후에는 즉각 리렌더링되도록 강제 주입
+            renderAdminDashboard(true);
         }
     };
 </script>
