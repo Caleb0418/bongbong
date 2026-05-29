@@ -269,6 +269,7 @@
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">수량</th>
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">접수시각</th>
                                     <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">상태</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="order-table-body" class="divide-y divide-gray-100">
@@ -454,6 +455,8 @@
 <script src="app.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+        let editingOrderId = null;
+
         // Elements
         const orderTableBody = document.getElementById("order-table-body");
         const totalQtyCounter = document.getElementById("total-qty-counter");
@@ -513,22 +516,73 @@
                     ? "bg-yellow-100 text-yellow-700"
                     : "bg-gray-100 text-gray-700";
 
-                const tr = `
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 font-bold text-sm">${order.buyerName}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">${item ? item.name : order.itemId}</td>
-                        <td class="px-6 py-4 text-sm font-semibold">${order.qty} 박스</td>
-                        <td class="px-6 py-4 text-sm text-gray-400">${order.time}</td>
-                        <td class="px-6 py-4">
-                            <select onchange="changeOrderStatus(${order.id}, this.value)" class="text-xs font-bold rounded-full px-2.5 py-1 border-0 outline-none focus:ring-0 appearance-none text-center ${statusColor} cursor-pointer">
-                                <option value="대기" ${order.status === '대기' ? 'selected' : ''}>대기</option>
-                                <option value="확정" ${order.status === '확정' ? 'selected' : ''}>확정</option>
-                                <option value="배송중" ${order.status === '배송중' ? 'selected' : ''}>배송중</option>
-                                <option value="배송완료" ${order.status === '배송완료' ? 'selected' : ''}>배송완료</option>
-                            </select>
-                        </td>
-                    </tr>
-                `;
+                const isEditing = order.id === editingOrderId;
+
+                let tr = "";
+                if (isEditing) {
+                    let itemOptions = "";
+                    items.forEach(i => {
+                        itemOptions += `<option value="${i.id}" ${i.id === order.itemId ? 'selected' : ''}>${i.name}</option>`;
+                    });
+
+                    tr = `
+                        <tr class="bg-blue-50/30 border-b border-blue-100 h-16">
+                            <td class="px-6 py-2">
+                                <input type="text" id="edit-row-buyer-${order.id}" value="${order.buyerName}" class="w-full text-xs font-bold border-gray-200 rounded-xl p-1.5 focus:border-primary focus:ring-primary">
+                            </td>
+                            <td class="px-6 py-2">
+                                <select id="edit-row-item-${order.id}" class="w-full text-xs border-gray-200 rounded-xl p-1.5 focus:border-primary focus:ring-primary">
+                                    ${itemOptions}
+                                </select>
+                            </td>
+                            <td class="px-6 py-2 flex items-center gap-1 mt-1 border-0">
+                                <input type="number" id="edit-row-qty-${order.id}" value="${order.qty}" min="1" class="w-16 text-xs font-semibold border-gray-200 rounded-xl p-1.5 focus:border-primary focus:ring-primary">
+                                <span class="text-xs text-gray-500 font-bold">${item ? item.unit : '박스'}</span>
+                            </td>
+                            <td class="px-6 py-2 text-xs text-gray-400 font-mono">${order.time}</td>
+                            <td class="px-6 py-2">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">수정 중</span>
+                            </td>
+                            <td class="px-6 py-2 text-right">
+                                <div class="flex gap-2 justify-end">
+                                    <button onclick="saveRowChange(${order.id})" class="text-green-600 hover:text-green-800 flex items-center" title="저장">
+                                        <span class="material-symbols-outlined text-lg font-bold">check</span>
+                                    </button>
+                                    <button onclick="cancelRowEdit()" class="text-gray-400 hover:text-gray-600 flex items-center" title="취소">
+                                        <span class="material-symbols-outlined text-lg font-bold">close</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tr = `
+                        <tr class="hover:bg-gray-50 transition-colors h-16">
+                            <td class="px-6 py-4 font-bold text-sm text-gray-900">${order.buyerName}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">${item ? item.name : order.itemId}</td>
+                            <td class="px-6 py-4 text-sm font-semibold">${order.qty} ${item ? item.unit : '박스'}</td>
+                            <td class="px-6 py-4 text-sm text-gray-400 font-mono">${order.time}</td>
+                            <td class="px-6 py-4">
+                                <select onchange="changeOrderStatus(${order.id}, this.value)" class="text-xs font-bold rounded-full px-2.5 py-1 border-0 outline-none focus:ring-0 appearance-none text-center ${statusColor} cursor-pointer">
+                                    <option value="대기" ${order.status === '대기' ? 'selected' : ''}>대기</option>
+                                    <option value="확정" ${order.status === '확정' ? 'selected' : ''}>확정</option>
+                                    <option value="배송중" ${order.status === '배송중' ? 'selected' : ''}>배송중</option>
+                                    <option value="배송완료" ${order.status === '배송완료' ? 'selected' : ''}>배송완료</option>
+                                </select>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex gap-2.5 justify-end text-gray-400">
+                                    <button onclick="editRow(${order.id})" class="hover:text-primary flex items-center" title="주문 수정">
+                                        <span class="material-symbols-outlined text-md">edit</span>
+                                    </button>
+                                    <button onclick="deleteRow(${order.id})" class="hover:text-red-600 flex items-center" title="주문 삭제">
+                                        <span class="material-symbols-outlined text-md">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
                 orderTableBody.insertAdjacentHTML("beforeend", tr);
             });
 
@@ -1074,6 +1128,38 @@
     window.changeOrderStatus = function(orderId, newStatus) {
         BongBongStore.updateOrderStatus(orderId, newStatus);
         renderAdminDashboard();
+    };
+
+    window.editRow = function(orderId) {
+        editingOrderId = orderId;
+        renderAdminDashboard();
+    };
+
+    window.cancelRowEdit = function() {
+        editingOrderId = null;
+        renderAdminDashboard();
+    };
+
+    window.saveRowChange = function(orderId) {
+        const buyerName = document.getElementById(`edit-row-buyer-${orderId}`).value.trim();
+        const itemId = document.getElementById(`edit-row-item-${orderId}`).value;
+        const qty = parseInt(document.getElementById(`edit-row-qty-${orderId}`).value, 10);
+        
+        if (!buyerName || isNaN(qty) || qty < 1) {
+            alert("구매자명과 올바른 수량을 입력해 주세요.");
+            return;
+        }
+
+        BongBongStore.updateOrder(orderId, { buyerName, itemId, qty });
+        editingOrderId = null;
+        renderAdminDashboard();
+    };
+
+    window.deleteRow = function(orderId) {
+        if (confirm("이 주문을 정말 삭제하시겠습니까?")) {
+            BongBongStore.deleteOrder(orderId);
+            renderAdminDashboard();
+        }
     };
 </script>
 </body>
